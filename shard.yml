@@ -1,0 +1,13 @@
+name: 2584-AI
+version: 0.1.0
+
+authors:
+  -  <>
+
+targets:
+  2584-AI:
+    main: src/2584-AI.cr
+
+crystal: 0.23.1
+
+license: MIT
