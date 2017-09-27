@@ -68,21 +68,6 @@ class Board
     self.[row * 4 + col] = value
   end
 
-  def add_random_tile!
-    pop_tile = rand < POP_TILE_WITH_ONE_RATE ? 1 : 2
-    empty_tiles = @board.count(&.== 0)
-    to_be_filled_tile = rand(empty_tiles)
-
-    empty_tile_count = 0
-    0.upto(15) do |tile_number|
-      if empty_tile_count == to_be_filled_tile
-        self.[tile_number] = pop_tile
-        return 
-      end
-      empty_tile_count += 1 if self.[tile_number] == 0
-    end
-  end
-
   def transpose!
     0.upto(3) do |row|
       0.upto(row) do |col|
@@ -123,18 +108,18 @@ class Board
     end
   end
 
-  def move!(direction)
-    case direction
-    when :left
+  def move!(opcode)
+    case opcode
+    when 3
       move_left!
-    when :right
+    when 1
       move_right!
-    when :up
+    when 0
       move_up!
-    when :down
+    when 2
       move_down!
     else
-      raise "FUCK"
+      -1
     end
   end
 
@@ -149,6 +134,7 @@ class Board
   end
 
   def move_left!
+    tmp = Board.new self
     merged = [false] * 16
     score = 0
     0.upto(15) do |tile_number|
@@ -176,7 +162,7 @@ class Board
       end
       self.[target_tile_number] = value
     end
-    score
+    tmp != self ? score : -1
   end
 
   def move_right!
