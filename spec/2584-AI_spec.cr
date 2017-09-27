@@ -28,15 +28,15 @@ describe Board do
 
   it "move!" do
     b = Board.new [1, 1, 0, 3, 0, 0, 0, 0, 9, 0, 5, 0, 7, 0, 0, 0]
-    b.move!(:left)
-    b.should eq [2, 3, 0, 0, 0, 0, 0, 0, 9, 0, 5, 0, 7, 0, 0, 0]
-    b.move!(:right)
+    b.move!(:left).should eq 2
+    b.should eq [2, 3, 0, 0, 0, 0, 0, 0, 9, 5, 0, 0, 7, 0, 0, 0]
+    b.move!(:right).should eq 5
     b.should eq [0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 9, 5, 0, 0, 0, 7]
-    b.move!(:down)
+    b.move!(:down).should eq 13
     b.should eq [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 0, 0, 9, 7]
-    b.move!(:up)
+    b.move!(:up).should eq 34
     b.should eq [0, 0, 9, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-    b.move!(:left)
+    b.move!(:left).should eq 89
     b.should eq [10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
   end
 
