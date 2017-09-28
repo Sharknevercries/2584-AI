@@ -9,14 +9,15 @@ class Action
     @opcode = op
   end
 
-  def apply(b : Board)
+  def apply!(b : Board)
     if (0b11 & @opcode) == @opcode # human
-      return b.move!(opcode) 
-    elsif b[@opcode & 0x0f] == 0
+      b.move!(opcode) 
+    elsif (b[@opcode & 0x0f]) == 0
       b[@opcode & 0x0f] = @opcode >> 4
-      return 0
+      0
+    else
+      -1
     end
-    return -1
   end
 
   def name
