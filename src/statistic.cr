@@ -1,6 +1,7 @@
 require "./agent"
 require "./action"
 require "./board"
+require "./helper"
 
 class Statistic
   property data
@@ -24,11 +25,11 @@ class Statistic
         score += move.apply!(game)
       end
       sum += score
-      max = [score, max].max
+      max = max(score, max)
       opc += (path.actions.size - 2) / 2
       tile = 0
       0.upto(15) do |t|
-        tile = [tile, game[t]].max
+        tile = max(tile, game[t])
       end
       stat[tile] += 1
       duration += path.tock_time - path.tick_time
@@ -74,7 +75,7 @@ class Statistic
   end
 
   def take_turns(player : Agent, evil : Agent)
-    ([@data[-1].actions.size + 1, 2].max % 2 == 1) ? player : evil
+    (max(@data[-1].actions.size + 1, 2) % 2 == 1) ? player : evil
   end
 
   def last_turns(player : Agent, evil : Agent)

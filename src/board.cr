@@ -116,7 +116,7 @@ class Board
         next if self.[target_tile_number] == 0
         found = false
         if ((value - self.[target_tile_number]).abs == 1 || (value == 1 && self.[target_tile_number] == 1)) && !merged[target_tile_number]
-          value = [value, self.[target_tile_number]].max + 1
+          value = max(value, self.[target_tile_number]) + 1
           score += TILE_MAPPING[value]
           merged[target_tile_number] = true
           found = true
