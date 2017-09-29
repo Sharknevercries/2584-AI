@@ -59,8 +59,8 @@ class Player < Agent
   end
 
   def take_action(b : Board)
-    opcode = [0, 1, 2, 3]
-    opcode.shuffle(@engine).map do |op|
+    opcode = {0, 1, 2, 3}
+    opcode.each do |op|
       after_b = Board.new b
       if after_b.move!(op) != -1
         return Action.move(op)
