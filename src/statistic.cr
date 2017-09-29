@@ -81,6 +81,13 @@ class Statistic
     take_turns(evil, player)
   end
 
+  def log(file : File)
+    file.write_bytes(@data.size.to_u64, IO::ByteFormat::LittleEndian)
+    @data.each do |rec|
+      rec.log(file)
+    end
+  end
+
   class Record
     property actions
     getter tick_time
@@ -98,6 +105,15 @@ class Statistic
 
     def tock
       @tock_time = Time.new.epoch_ms
+    end
+
+    def log(file : File)
+      file.write_bytes(@actions.size.to_u64, IO::ByteFormat::LittleEndian)
+      @actions.each do |action|
+        file.write_bytes(action.to_i.to_u16, IO::ByteFormat::LittleEndian)
+      end
+      file.write_bytes(@tick_time, IO::ByteFormat::LittleEndian)
+      file.write_bytes(@tock_time, IO::ByteFormat::LittleEndian)
     end
   end
 end

@@ -9,6 +9,10 @@ class Action
     @opcode = op
   end
 
+  def to_i
+    @opcode
+  end
+
   def apply!(b : Board)
     if (0b11 & @opcode) == @opcode # human
       b.move!(opcode) 

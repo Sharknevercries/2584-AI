@@ -36,3 +36,11 @@ while !stat.is_finished
   winner = stat.last_turns(player, evil)
   stat.close_episode
 end
+
+if !save.empty?
+  puts "OK"
+  File.open(save, "w") do |f|
+    stat.log(f)
+    f.flush
+  end
+end
