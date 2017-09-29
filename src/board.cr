@@ -23,7 +23,7 @@ class Board
   end
 
   def [](row, col)
-    self.[row * 4 + col]
+    self.[(row << 2) + col]
   end
 
   def []=(tile_number, value)
@@ -31,7 +31,7 @@ class Board
   end
 
   def []=(row, col, value)
-    self.[row * 4 + col] = value
+    self.[(row << 2) + col] = value
   end
 
   def transpose!
@@ -101,32 +101,30 @@ class Board
 
   def move_left!
     tmp = Board.new self
-    merged = [false] * 16
     score = 0
-    0.upto(15) do |tile_number|
-      next if self.[tile_number] == 0
-      left_most_tile_number = (tile_number / 4) * 4
-      target_tile_number = tile_number
-      t = target_tile_number - left_most_tile_number
-      value = self.[tile_number]
-      self.[tile_number] = 0
-
-      t.times do |e|
-        target_tile_number -= 1
-        next if self.[target_tile_number] == 0
-        found = false
-        if ((value - self.[target_tile_number]).abs == 1 || (value == 1 && self.[target_tile_number] == 1)) && !merged[target_tile_number]
-          value = max(value, self.[target_tile_number]) + 1
-          score += TILE_MAPPING[value]
-          merged[target_tile_number] = true
-          found = true
+    0.upto(3) do |r|
+      top, hold = 0, 0
+      0.upto(3) do |c|
+        tile = self.[r, c]
+        next if tile == 0
+        self.[r, c] = 0
+        if hold != 0
+          if (tile - hold).abs == 1 || (tile == 1 && hold == 1)
+            new_tile = max(tile, hold) + 1
+            self.[r, top] = new_tile
+            top += 1
+            score += TILE_MAPPING[new_tile]
+            hold = 0
+          else
+            self.[r, top] = hold
+            top += 1
+            hold = tile
+          end
         else
-          target_tile_number += 1
-          break
+          hold = tile
         end
-        break if found
       end
-      self.[target_tile_number] = value
+      self.[r, top] = hold if hold != 0
     end
     tmp != self ? score : -1
   end
