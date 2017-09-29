@@ -1,27 +1,18 @@
 # 2584-AI
 
-TODO: Write a description here
+This is the homework project for Theorem of Computer Games in NCTU.
 
 ## Installation
 
-TODO: Write installation instructions here
+1. Clone this repo to your machine
+2. Ensure to install Cyrstal
+3. Jump to Usage
 
 ## Usage
 
-TODO: Write usage instructions here
+1. Run ./build.sh
+2. Run ./2584 [arguments]
 
 ## Development
 
-TODO: Write development instructions here
-
-## Contributing
-
-1. Fork it ( https://github.com/[your-github-name]/2584-AI/fork )
-2. Create your feature branch (git checkout -b my-new-feature)
-3. Commit your changes (git commit -am 'Add some feature')
-4. Push to the branch (git push origin my-new-feature)
-5. Create a new Pull Request
-
-## Contributors
-
-- [[your-github-name]](https://github.com/[your-github-name])  - creator, maintainer
+2017/09/29 Complete Assignment 1
