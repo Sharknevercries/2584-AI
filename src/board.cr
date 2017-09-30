@@ -35,9 +35,17 @@ class Board
   end
 
   def transpose!
-    0.upto(3) do |row|
-      0.upto(row) do |col|
+    1.upto(3) do |row|
+      0.upto(row - 1) do |col|
         self.[row, col], self.[col, row] = self.[col, row], self.[row, col]
+      end
+    end
+  end
+
+  def transpose2!
+    0.upto(2) do |row|
+      0.upto(2 - row) do |col|
+        self.[row, col], self.[3 - col, 3 - row] = self.[3 - col, 3 - row], self.[row, col]
       end
     end
   end
@@ -129,16 +137,16 @@ class Board
   end
 
   def move_up!
-    rotate_right!
-    score = move_right!
-    rotate_left!
+    transpose!
+    score = move_left!
+    transpose!
     score
   end
 
   def move_down!
-    rotate_right!
+    transpose2!
     score = move_left!
-    rotate_left!
+    transpose2!
     score
   end
 end
