@@ -95,7 +95,7 @@ class Statistic
     getter tock_time
     
     def initialize
-      @actions = [] of Action
+      @actions = Array(Action).new 32768
       @tick_time = 0_i64
       @tock_time = 0_i64
     end
