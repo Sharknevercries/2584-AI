@@ -57,21 +57,13 @@ class Board
   end
 
   def rotate_right!
-    temp_board = Board.new self
-    0.upto(3) do |row|
-      0.upto(3) do |col|
-        self.[row, col] = temp_board[3 - col, row]
-      end
-    end
+    transpose!
+    reflect_horizonal!
   end
 
   def rotate_left!
-    temp_board = Board.new self
-    0.upto(3) do |row|
-      0.upto(3) do |col|
-        self.[row, col] = temp_board[col, 3 - row]
-      end
-    end
+    transpose!
+    reflect_vertical!
   end
 
   def move!(opcode)
