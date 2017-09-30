@@ -34,11 +34,11 @@ class RandomEnvironment < Agent
     if @prop["seed"]?
       @engine = Random.new(@prop["seed"].to_i)
     end
+    @pos = StaticArray(Int32, 16).new { |i| i }
   end
 
   def take_action(b : Board)
-    pos = Array.new(16) { |e| e }
-    pos.shuffle(@engine).map do |e|
+    @pos.shuffle!(@engine).map do |e|
       next if b[e] != 0
       pop_tile = @engine.rand < POP_TILE_WITH_ONE_RATE ? 1 : 2
       return Action.place(pop_tile, e)
