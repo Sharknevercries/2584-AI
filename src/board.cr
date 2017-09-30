@@ -1,9 +1,9 @@
 require "./environment"
 
 class Board
-  property board : Array(Int32)
+  property board : StaticArray(Int32, 16)
 
-  def initialize(@board : Array(Int32) = [0] * 16)
+  def initialize(@board : StaticArray(Int32, 16) = StaticArray(Int32, 16).new 0)
   end
 
   def initialize(b : Board)
@@ -14,7 +14,7 @@ class Board
     board == b.board
   end
 
-  def ==(b : Array(Int32))
+  def ==(b : StaticArray(Int32, 16))
     board == b
   end
 
