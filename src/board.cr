@@ -76,16 +76,31 @@ class Board
 
   def move!(opcode)
     case opcode
-    when 3
-      move_left!
-    when 1
-      move_right!
     when 0
       move_up!
+    when 1
+      move_right!
     when 2
       move_down!
+    when 3
+      move_left!
     else
       -1
+    end
+  end
+
+  def can_move?(opcode)
+    case opcode
+    when 0
+      can_move_up?
+    when 1
+      can_move_right?
+    when 2
+      can_move_down?
+    when 3
+      can_move_left?
+    else
+      false
     end
   end
 
@@ -100,7 +115,6 @@ class Board
   end
 
   def move_left!
-    tmp = Board.new self
     score = 0
     0.upto(3) do |r|
       top, hold = 0, 0
@@ -112,21 +126,20 @@ class Board
           if (tile - hold).abs == 1 || (tile == 1 && hold == 1)
             new_tile = max(tile, hold) + 1
             self.[r, top] = new_tile
-            top += 1
             score += TILE_MAPPING[new_tile]
             hold = 0
           else
             self.[r, top] = hold
-            top += 1
             hold = tile
           end
+          top += 1
         else
           hold = tile
         end
       end
       self.[r, top] = hold if hold != 0
     end
-    tmp != self ? score : -1
+    score
   end
 
   def move_right!
@@ -148,5 +161,51 @@ class Board
     score = move_left!
     transpose2!
     score
+  end
+
+  def can_move_left?
+    b = Board.new self
+    0.upto(3) do |r|
+      top, hold, pos = 0, 0, 0
+      0.upto(3) do |c|
+        tile = b[r, c]
+        next if tile == 0
+        pos = c
+        if hold != 0
+          if (tile - hold).abs == 1 || (tile == 1 && hold == 1)
+            return true
+          else
+            hold = tile
+            return true if top != c - 1
+          end
+          top += 1
+        else
+          hold = tile
+        end
+      end
+      return true if hold != 0 && top != pos
+    end
+    false
+  end
+
+  def can_move_right?
+    reflect_horizonal!
+    can = can_move_left?
+    reflect_horizonal!
+    can
+  end
+
+  def can_move_up?
+    transpose!
+    can = can_move_left?
+    transpose!
+    can
+  end
+
+  def can_move_down?
+    transpose2!
+    can = can_move_left?
+    transpose2!
+    can
   end
 end

@@ -61,8 +61,7 @@ class Player < Agent
   def take_action(b : Board)
     opcode = {0, 1, 2, 3}
     opcode.each do |op|
-      after_b = Board.new b
-      if after_b.move!(op) != -1
+      if b.can_move?(op)
         return Action.move(op)
       end
     end
