@@ -49,6 +49,7 @@ end
 
 class Player < Agent
   property engine
+  WEIGHT = StaticArray(Float64, 16).new { |i| i * 0.175 }
 
   def initialize(args : String)
     super("name=player " + args)
@@ -59,12 +60,25 @@ class Player < Agent
   end
 
   def take_action(b : Board)
-    opcode = {0, 1, 2, 3}
-    opcode.each do |op|
+    max_op, max_v = -1, -1
+    0.upto(3) do |op|
       if b.can_move?(op)
-        return Action.move(op)
+        tmp = Board.new b
+        score = tmp.move!(op)
+        board_v = 0
+        tmp.board.each_with_index do |value, idx|
+          board_v += WEIGHT[idx] * TILE_MAPPING[value]
+        end
+        if score + board_v > max_v
+          max_v = score + board_v
+          max_op = op
+        end
       end
     end
-    Action.new
+    if max_op != -1
+      Action.move(max_op)
+    else
+      Action.new
+    end
   end
 end
