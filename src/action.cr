@@ -1,4 +1,4 @@
-class Action
+struct Action
   property opcode
 
   def initialize(act : Action)
