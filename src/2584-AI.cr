@@ -29,6 +29,7 @@ stat = Statistic.new(total, block, clear_stat_buffer)
 
 while !stat.is_finished
   stat.open_episode
+  player.open_episode
   game = Board.new
   loop do
     who = stat.take_turns(player, evil)
@@ -37,6 +38,7 @@ while !stat.is_finished
     stat.save_action(move)
   end
   winner = stat.last_turns(player, evil)
+  player.close_episode
   stat.close_episode
 end
 

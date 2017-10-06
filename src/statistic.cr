@@ -17,7 +17,6 @@ class Statistic
     sum, max, opc, duration = 0, 0 ,0, 0
     stat = [0] * TILE_MAPPING.size
     iter = @data.reverse_each
-    @episode_count += @clear ? @data.size : @block
 
     block.times do |i|
       path = iter.next.as(Record)
@@ -61,10 +60,11 @@ class Statistic
   end
 
   def is_finished
-    @data.size >= @total
+    @episode_count >= @total
   end
 
   def open_episode
+    @episode_count += 1
     @data << Record.new
     @data[-1].tick
   end

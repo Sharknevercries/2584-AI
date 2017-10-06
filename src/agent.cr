@@ -1,4 +1,5 @@
 require "./board"
+require "./tuple-network/*"
 
 abstract class Agent
   property prop
@@ -52,19 +53,63 @@ class Player < Agent
 
   def initialize(args : String)
     super("name=player " + args)
-    @engine = Random.new
-    if @prop["seed"]?
-      @engine = Random.new(@prop["seed"].to_i)
-    end    
+    @engine = @prop["seed"]? ? Random.new(@prop["seed"].to_i) : Random.new
+    @alpha = @prop["alpha"]? ? @prop["alpha"].to_f : 0.0025
+    @tuple_network = TupleNetwork.new [
+      Feature.new([0, 1, 2, 3], "row1"),
+      Feature.new([4, 5, 6, 7], "row2")
+    ]
+    
+    @episode = Array(State).new 20000
+
+  end
+
+  def save_state(state : State)
+    @episode << state
+  end
+  
+  def open_episode(flag : String = "")
+    @episode.clear
+  end
+
+  def close_episode(flag : String = "")
+    n = @episode.size - 1
+    while n > 0
+      prev, cur = @episode[n - 1], @episode[n]
+      td_error = 0.0
+      if n == @episode.size - 1
+        td_error = 0 - @tuple_network.estimate(prev.after)
+      else
+        td_error = cur.reward + @tuple_network.estimate(cur.after) - @tuple_network.estimate(prev.after)
+      end
+      @tuple_network.update(prev.after, @alpha * td_error)
+      n -= 1
+    end
   end
 
   def take_action(b : Board)
-    opcode = {0, 1, 2, 3}
-    opcode.each do |op|
-      if b.can_move?(op)
-        return Action.move(op)
+    best_op = 0
+    best_value = -1000
+    after = Array(State).new 4 { |op|
+      temp = Board.new b
+      reward = temp.move!(op)
+      if reward != -1
+        estimate = @tuple_network.estimate(temp)
+        best_op, best_value = op, reward + estimate if reward + estimate > best_value
+      else
+        reward = 0
       end
+      State.new(temp, reward)
+    }
+    save_state(after[best_op])
+    Action.new best_op
+  end
+
+  private struct State
+    property after : Board
+    property reward : Int32
+
+    def initialize(@after, @reward)
     end
-    Action.new
   end
 end
