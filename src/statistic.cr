@@ -6,8 +6,9 @@ require "./helper"
 class Statistic
   property data
 
-  def initialize(@total : Int32, @block = 0)
+  def initialize(@total : Int32, @block = 0, @clear = false)
     @block = @block != 0 ? @block : @total
+    @episode_count = 0
     @data = [] of Record
   end
 
@@ -16,6 +17,7 @@ class Statistic
     sum, max, opc, duration = 0, 0 ,0, 0
     stat = [0] * TILE_MAPPING.size
     iter = @data.reverse_each
+    @episode_count += @clear ? @data.size : @block
 
     block.times do |i|
       path = iter.next.as(Record)
@@ -38,7 +40,7 @@ class Statistic
     avg = sum.to_f / block
     coef = 100.0 / block
     ops = opc * 1000.0 / duration
-    puts "%d\tavg = %d, max = %d, ops = %d" % [@data.size, avg.to_i, max.to_i, ops.to_i]
+    puts "%d\tavg = %d, max = %d, ops = %d" % [@episode_count, avg.to_i, max.to_i, ops.to_i]
 
     t, c = 0, 0
     while c < block
@@ -54,6 +56,8 @@ class Statistic
       t += 1
     end
     puts ""
+
+    @data.clear if @clear
   end
 
   def is_finished
