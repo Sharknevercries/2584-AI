@@ -1,1 +1,0 @@
-crystal ./src/2584-AI.cr --release -o 2584 --no-debug
