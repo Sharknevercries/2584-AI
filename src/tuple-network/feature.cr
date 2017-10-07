@@ -39,6 +39,24 @@ class Feature
     end
     value
   end
+
+  def save(path)
+    File.open(path + "/" + @name, "w") do |f|
+      @lut.each do |cell|
+        f.puts cell
+      end
+    end
+  end
+
+  def load(path)
+    File.open(path + "/" + @name) do |f|
+      line_num = 0
+      f.each_line do |line|
+        @lut[line_num] = line.to_f
+        line_num += 1
+      end
+    end
+  end
   
   private def at(b : Board, idxs : Array(Int32))
     lut_idx = 0

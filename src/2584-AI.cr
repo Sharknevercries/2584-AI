@@ -42,6 +42,8 @@ while !stat.is_finished
   stat.close_episode
 end
 
+player.routine_after_all_play
+
 if !save.empty?
   File.open(save, "w") do |f|
     stat.log(f)

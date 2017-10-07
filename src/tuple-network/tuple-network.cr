@@ -19,4 +19,16 @@ class TupleNetwork
     end
     value
   end
+
+  def save(path)
+    @patterns.each do |pattern|
+      pattern.save(path)
+    end    
+  end
+
+  def load(path)
+    @patterns.each do |pattern|
+      pattern.load(path)
+    end
+  end
 end

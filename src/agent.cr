@@ -55,17 +55,30 @@ class Player < Agent
     super("name=player " + args)
     @engine = @prop["seed"]? ? Random.new(@prop["seed"].to_i) : Random.new
     @alpha = @prop["alpha"]? ? @prop["alpha"].to_f : 0.0025
+    @save_path = @prop["save"]? ? @prop["save"] : ""
+    @load_path = @prop["load"]? ? @prop["load"] : ""
     @tuple_network = TupleNetwork.new [
       Feature.new([0, 1, 2, 3], "row1"),
       Feature.new([4, 5, 6, 7], "row2")
     ]
-    
     @episode = Array(State).new 20000
+    load_tuple_network
+  end
 
+  def save_tuple_network
+    @tuple_network.save(@save_path) if !@save_path.empty?
+  end
+
+  def load_tuple_network
+    @tuple_network.load(@load_path) if !@load_path.empty?
   end
 
   def save_state(state : State)
     @episode << state
+  end
+
+  def routine_after_all_play
+    save_tuple_network
   end
   
   def open_episode(flag : String = "")
