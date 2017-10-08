@@ -116,6 +116,7 @@ class Board
 
   def move_left!
     score = 0
+    temp = Board.new self
     0.upto(3) do |r|
       top, hold = 0, 0
       0.upto(3) do |c|
@@ -139,7 +140,7 @@ class Board
       end
       self.[r, top] = hold if hold != 0
     end
-    score
+    self == temp ? -1 : score
   end
 
   def move_right!
