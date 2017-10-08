@@ -102,7 +102,7 @@ class Player < Agent
 
   def take_action(b : Board)
     best_op = 0
-    best_value = -1000
+    best_value = -1e9
     after = Array(State).new 4 { |op|
       temp = Board.new b
       reward = temp.move!(op)
@@ -115,7 +115,7 @@ class Player < Agent
       State.new(temp, reward)
     }
     save_state(after[best_op])
-    Action.new best_op
+    best_value == -1e9 ? Action.new : Action.move best_op
   end
 
   private struct State
