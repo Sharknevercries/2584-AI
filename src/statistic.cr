@@ -14,7 +14,7 @@ class Statistic
 
   def show
     block = [@data.size, @block].min
-    sum, max, opc, duration = 0, 0 ,0, 0
+    sum, max, opc, duration = 0_u64, 0 ,0, 0
     stat = [0] * TILE_MAPPING.size
     iter = @data.reverse_each
 
