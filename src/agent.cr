@@ -1,5 +1,6 @@
 require "./board"
 require "./tuple-network/*"
+require "./environment"
 
 abstract class Agent
   property prop
@@ -41,7 +42,7 @@ class RandomEnvironment < Agent
   def take_action(b : Board)
     @pos.shuffle!(@engine).map do |e|
       next if b[e] != 0
-      pop_tile = @engine.rand < POP_TILE_WITH_ONE_RATE ? 1 : 2
+      pop_tile = @engine.rand < POP_TILE_WITH_ONE_RATE ? 1 : 3
       return Action.place(pop_tile, e)
     end
     Action.new
@@ -114,7 +115,7 @@ class Player < Agent
       temp = Board.new b
       reward = temp.move!(op)
       if reward != -1
-        estimate = @tuple_network.estimate(temp)
+        estimate = dfs(temp, 2) # feed 2, 4, 6, ...
         best_op, best_value = op, reward + estimate if reward + estimate > best_value
       else
         reward = 0
@@ -123,6 +124,38 @@ class Player < Agent
     }
     save_state(after[best_op])
     best_value == -1e9 ? Action.new : Action.move best_op
+  end
+
+  def dfs(b : Board, depth : Int32)
+    if depth % 2 == 1 # max-node
+      value = -1e9
+      0.upto(3) do |op|
+        temp = Board.new b
+        reward = Action.move(op).apply!(temp)
+        if reward != -1
+          if depth - 1 > 0
+            estimate =  dfs(temp, depth - 1)
+          else
+            estimate =  @tuple_network.estimate(temp)
+          end
+          value = reward + estimate if reward + estimate > value
+        else
+          value = 0 if 0 > value
+        end
+      end
+      value
+    else # expected-node
+      value = 0.0
+      0.upto(15) do |tile_number|
+        next if b[tile_number] != 0
+        GAME_ENV.each do |tile_value|
+          b[tile_number] = tile_value[0];
+          value += tile_value[1] * dfs(b, depth - 1)
+          b[tile_number] = 0;
+        end
+      end
+      value
+    end
   end
 
   private struct State
