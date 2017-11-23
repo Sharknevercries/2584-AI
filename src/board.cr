@@ -89,31 +89,6 @@ class Board
     end
   end
 
-  def can_move?(opcode)
-    case opcode
-    when 0
-      can_move_up?
-    when 1
-      can_move_right?
-    when 2
-      can_move_down?
-    when 3
-      can_move_left?
-    else
-      false
-    end
-  end
-
-  def to_s(io)
-    0.upto(15) do |tile_number|
-      print self[tile_number]
-      print "\t"
-      if tile_number % 4 == 3
-        puts ""
-      end
-    end
-  end
-
   def move_left!
     score = 0
     temp = Board.new self
@@ -138,75 +113,103 @@ class Board
           hold = tile
         end
       end
-      self[r, top] = hold if hold != 0
+      self[r, top] = hold unless hold == 0
     end
     self == temp ? -1 : score
   end
 
   def move_right!
-    reflect_horizonal!
-    score = move_left!
-    reflect_horizonal!
-    score
+    score = 0
+    temp = Board.new self
+    0.upto(3) do |r|
+      top, hold = 3, 0
+      3.downto(0) do |c|
+        tile = self[r, c]
+        next if tile == 0
+        self[r, c] = 0
+        if hold != 0
+          if (tile - hold).abs == 1 || (tile == 1 && hold == 1)
+            new_tile = max(tile, hold) + 1
+            self[r, top] = new_tile
+            score += TILE_MAPPING[new_tile]
+            hold = 0
+          else
+            self[r, top] = hold
+            hold = tile
+          end
+          top -= 1
+        else
+          hold = tile
+        end
+      end
+      self[r, top] = hold unless hold == 0
+    end
+    self == temp ? -1 : score
   end
 
   def move_up!
-    transpose!
-    score = move_left!
-    transpose!
-    score
-  end
-
-  def move_down!
-    transpose2!
-    score = move_left!
-    transpose2!
-    score
-  end
-
-  def can_move_left?
-    b = Board.new self
-    0.upto(3) do |r|
-      top, hold, pos = 0, 0, 0
-      0.upto(3) do |c|
-        tile = b[r, c]
+    score = 0
+    temp = Board.new self
+    0.upto(3) do |c|
+      top, hold = 0, 0
+      0.upto(3) do |r|
+        tile = self[r, c]
         next if tile == 0
-        pos = c
+        self[r, c] = 0
         if hold != 0
           if (tile - hold).abs == 1 || (tile == 1 && hold == 1)
-            return true
+            new_tile = max(tile, hold) + 1
+            self[top, c] = new_tile
+            score += TILE_MAPPING[new_tile]
+            hold = 0
           else
+            self[top, c] = hold
             hold = tile
-            return true if top != c - 1
           end
           top += 1
         else
           hold = tile
         end
       end
-      return true if hold != 0 && top != pos
+      self[top, c] = hold unless hold == 0
     end
-    false
+    self == temp ? -1 : score
   end
 
-  def can_move_right?
-    reflect_horizonal!
-    can = can_move_left?
-    reflect_horizonal!
-    can
+  def move_down!
+    score = 0
+    temp = Board.new self
+    0.upto(3) do |c|
+      top, hold = 3, 0
+      3.downto(0) do |r|
+        tile = self[r, c]
+        next if tile == 0
+        self[r, c] = 0
+        if hold != 0
+          if (tile - hold).abs == 1 || (tile == 1 && hold == 1)
+            new_tile = max(tile, hold) + 1
+            self[top, c] = new_tile
+            score += TILE_MAPPING[new_tile]
+            hold = 0
+          else
+            self[top, c] = hold
+            hold = tile
+          end
+          top -= 1
+        else
+          hold = tile
+        end
+      end
+      self[top, c] = hold unless hold == 0
+    end
+    self == temp ? -1 : score
   end
 
-  def can_move_up?
-    transpose!
-    can = can_move_left?
-    transpose!
-    can
-  end
-
-  def can_move_down?
-    transpose2!
-    can = can_move_left?
-    transpose2!
-    can
+  def to_s(io)
+    0.upto(15) do |tile_number|
+      io << self[tile_number]
+      io << "\t"
+      io << "\n" if tile_number % 4 == 3
+    end
   end
 end
