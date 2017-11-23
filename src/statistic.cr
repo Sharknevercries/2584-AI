@@ -14,7 +14,7 @@ class Statistic
 
   def show
     block = [@data.size, @block].min
-    sum, max, opc, duration = 0_u64, 0 ,0, 0
+    sum, max, opc, duration = 0_u64, 0, 0, 0
     stat = [0] * TILE_MAPPING.size
     iter = @data.reverse_each
 
@@ -35,7 +35,7 @@ class Statistic
       stat[tile] += 1
       duration += path.tock_time - path.tick_time
     end
-    
+
     avg = sum.to_f / block
     coef = 100.0 / block
     ops = opc * 1000.0 / duration
@@ -97,7 +97,7 @@ class Statistic
     property actions
     getter tick_time
     getter tock_time
-    
+
     def initialize
       @actions = Array(Action).new 32768
       @tick_time = 0_i64

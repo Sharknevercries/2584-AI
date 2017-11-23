@@ -5,5 +5,5 @@ macro max(a, b)
       __temp1
     else
       __temp2
-    end  
+    end
   end

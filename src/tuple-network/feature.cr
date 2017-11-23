@@ -3,7 +3,7 @@ class Feature
 
   def initialize(@pattern : Array(Int32), @name = "No Name")
     @lut = Array(Float64).new(1 << (5 * @pattern.size), 0.0)
-    
+
     b = Board.new (StaticArray(Int32, 16).new { |k| k })
     @iso_idxs = StaticArray(Array(Int32), 8).new { |i|
       iso = Array(Int32).new @pattern.size
@@ -57,7 +57,7 @@ class Feature
       end
     end
   end
-  
+
   private def at(b : Board, idxs : Array(Int32))
     lut_idx = 0
     idxs.each do |idx|

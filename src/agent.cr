@@ -63,7 +63,7 @@ class Player < Agent
       Feature.new([0, 1, 2, 4, 5], "thumb1"),
       Feature.new([4, 5, 6, 8, 9], "thumb2"),
       Feature.new([1, 2, 3, 5, 6], "thumb3"),
-      Feature.new([0, 1, 2, 4, 5], "stair")
+      Feature.new([0, 1, 2, 4, 5], "stair"),
     ]
     @episode = Array(State).new 20000
     load_tuple_network
@@ -84,7 +84,7 @@ class Player < Agent
   def routine_after_all_play
     save_tuple_network
   end
-  
+
   def open_episode(flag : String = "")
     @episode.clear
   end

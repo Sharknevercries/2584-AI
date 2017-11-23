@@ -16,9 +16,9 @@ OptionParser.parse! do |parser|
   parser.on("--play=PLAYER_ARGS", "The arguments of player initialization") { |args| player_args = args }
   parser.on("--evil=EVIL_ARGS", "The arguments of evil (environment) initialization") { |args| evil_args = args }
   parser.on("--stat-no-store", "After showing statistics once, clear episode buffer") { clear_stat_buffer = true }
-  #parser.on("--load=LOAD", "Specifies the name to salute") { |name| load = name }
+  # parser.on("--load=LOAD", "Specifies the name to salute") { |name| load = name }
   parser.on("--save=SAVE", "Path to save statistic data") { |path| save = path }
-  #parser.on("--summary", "Specifies the name to salute") { summary = true }
+  # parser.on("--summary", "Specifies the name to salute") { summary = true }
   parser.on("-h", "--help", "Show this help") { puts parser }
 end
 

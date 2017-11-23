@@ -15,7 +15,7 @@ struct Action
 
   def apply!(b : Board)
     if (0b11 & @opcode) == @opcode # human
-      b.move!(opcode) 
+      b.move!(opcode)
     elsif (b[@opcode & 0x0f]) == 0
       b[@opcode & 0x0f] = @opcode >> 4
       0
@@ -29,7 +29,7 @@ struct Action
       opname = ["up", "right", "down", "left"]
       return "slide #{opname[opcode]}"
     else
-      return "place #{@opcode >> 4}-index at position #{@opcode & 0x0f}" 
+      return "place #{@opcode >> 4}-index at position #{@opcode & 0x0f}"
     end
   end
 
