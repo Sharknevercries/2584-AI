@@ -4,7 +4,11 @@ class Feature
   def initialize(@pattern : Array(Int32), @name = "No Name")
     @lut = Array(Float64).new(1 << (5 * @pattern.size), 0.0)
 
-    b = Board.new (StaticArray(Int32, 16).new { |k| k })
+    b = Board.new
+    16.times do |i|
+      b[i] = i
+    end
+
     @iso_idxs = StaticArray(Array(Int32), 8).new { |i|
       iso = Array(Int32).new @pattern.size
       b.reflect_horizonal! if i == 4

@@ -1,3 +1,5 @@
+require "./environment"
+
 struct BitBoard
   #
   # Use 5-bit to represent a grid in 2584, so it cost 80-bit to represent a board
@@ -21,6 +23,56 @@ struct BitBoard
     end
     v
   }
+  # (2^5)^4 = 1048576
+  # a row move_left cache
+  # (after_move, reward)
+  class_property move_cache : Array(StaticArray(Int32, 2)) = Array.new(1048576) { |index|
+    ret = StaticArray(Int32, 2).new 0
+    b = StaticArray(Int32, 4).new 0
+
+    larger_than_25 = false
+    temp = index
+    4.times do |i|
+      break if temp == 0
+      b[i] = temp % 32
+      larger_than_25 = true if b[i] > 25
+      temp >>= 5
+    end
+
+    if !larger_than_25
+      score, top, hold = 0, 0, 0
+      0.upto(3) do |c|
+        tile = b[c]
+        next if tile == 0
+        b[c] = 0
+        if hold != 0
+          if (tile - hold).abs == 1 || (tile == 1 && hold == 1)
+            new_tile = max(tile, hold) + 1
+            b[top] = new_tile
+            score += TILE_MAPPING[new_tile]
+            hold = 0
+          else
+            b[top] = hold
+            hold = tile
+          end
+          top += 1
+        else
+          hold = tile
+        end
+      end
+      b[top] = hold unless hold == 0
+
+      temp = 0
+      3.downto(0) do |i|
+        temp = (temp << 5) + b[i]
+      end
+
+      ret[0] = temp
+      ret[1] = score
+    end
+
+    ret
+  }
 
   def initialize(@board : StaticArray(UInt64, 2) = StaticArray(UInt64, 2).new 0_u64)
   end
@@ -30,12 +82,12 @@ struct BitBoard
   end
 
   # index: 0~15
-  def [](index : Int) : Int
-    (@board[(index & 0b1000) >> 3] >> multiply_by_5(index & 0b0111)) & 0b11111
+  def [](index : Int) : Int32
+    ((@board[(index & 0b1000) >> 3] >> multiply_by_5(index & 0b0111)) & 0b11111).to_i
   end
 
   # row, col: 0~3
-  def [](row : Int, col : Int) : Int
+  def [](row : Int, col : Int) : Int32
     self[(row << 2) + col]
   end
 
@@ -58,7 +110,7 @@ struct BitBoard
 
   # count : 0~15
   # TODO: improve
-  def >>(count : Int)
+  def >>(count : Int) : BitBoard
     other = BitBoard.new self
 
     if count == 0
@@ -78,7 +130,7 @@ struct BitBoard
 
   # count : 0~15
   # TODO: improve
-  def <<(count : Int)
+  def <<(count : Int) : BitBoard
     other = BitBoard.new self
 
     if count == 0
@@ -97,7 +149,7 @@ struct BitBoard
     other
   end
 
-  def &(b : BitBoard)
+  def &(b : BitBoard) : BitBoard
     other = BitBoard.new self
 
     other.board[0] = @board[0] & b.board[0]
@@ -106,7 +158,7 @@ struct BitBoard
     other
   end
 
-  def |(b : BitBoard)
+  def |(b : BitBoard) : BitBoard
     other = BitBoard.new self
     
     other.board[0] = @board[0] | b.board[0]
@@ -115,13 +167,168 @@ struct BitBoard
     other
   end
 
-  def ^(b : BitBoard)
+  def ^(b : BitBoard) : BitBoard
     other = BitBoard.new self
     
     other.board[0] = @board[0] ^ b.board[0]
     other.board[1] = @board[1] ^ b.board[1]
     
     other
+  end
+
+  # tranpose followed by \
+  def transpose! : BitBoard
+    x = @board[0]
+    y = @board[1]
+    
+    t = (x ^ (x >> multiply_by_5(3))) & 0xF83E0_u64
+    @board[0] = x ^ t ^ ((t << multiply_by_5(3)) & @@mask1[8])
+    t = (y ^ (y >> multiply_by_5(3))) & 0xF83E0_u64
+    @board[1] = y ^ t ^ ((t << multiply_by_5(3)) & @@mask1[8])
+    
+    x = (@board[0] >> multiply_by_5(2)) & 0x3FF003FF_u64
+    y = @board[1] & 0x3FF003FF_u64
+
+    @board[0] = (@board[0] & 0x3FF003FF_u64) | (y << multiply_by_5(2))
+    @board[1] = (@board[1] & (~(0x3FF003FF_u64))) | x
+
+    self
+  end
+
+  # tranpose followed by /
+  def transpose2! : BitBoard
+    x = @board[0]
+    y = @board[1]
+        
+    t = (x ^ (x >> multiply_by_5(5))) & 0x07C1F_u64
+    @board[0] = x ^ t ^ ((t << multiply_by_5(5)) & @@mask1[8])
+    t = (y ^ (y >> multiply_by_5(5))) & 0x07C1F_u64
+    @board[1] = y ^ t ^ ((t << multiply_by_5(5)) & @@mask1[8])
+        
+    y = (@board[1] >> multiply_by_5(2)) & 0x3FF003FF_u64
+    x = @board[0] & 0x3FF003FF_u64
+    
+    @board[1] = (@board[1] & 0x3FF003FF_u64) | (x << multiply_by_5(2))
+    @board[0] = (@board[0] & (~(0x3FF003FF_u64))) | y
+
+    self
+  end
+
+  def reflect_horizonal!
+    0.upto(3) do |row|
+      self[row, 0], self[row, 3] = self[row, 3], self[row, 0]
+      self[row, 1], self[row, 2] = self[row, 2], self[row, 1]
+    end
+  end
+
+  def reflect_vertical!
+    0.upto(3) do |col|
+      self[0, col], self[3, col] = self[3, col], self[0, col]
+      self[1, col], self[2, col] = self[2, col], self[1, col]
+    end
+  end
+
+  def rotate_right!
+    transpose!
+    reflect_horizonal!
+  end
+
+  def rotate_left!
+    transpose!
+    reflect_vertical!
+  end
+
+  def move_left!
+    score = 0
+    temp = Board.new self
+    0.upto(3) do |r|
+      top, hold = 0, 0
+      0.upto(3) do |c|
+        tile = self[r, c]
+        next if tile == 0
+        self[r, c] = 0
+        if hold != 0
+          if (tile - hold).abs == 1 || (tile == 1 && hold == 1)
+            new_tile = max(tile, hold) + 1
+            self[r, top] = new_tile
+            score += TILE_MAPPING[new_tile]
+            hold = 0
+          else
+            self[r, top] = hold
+            hold = tile
+          end
+          top += 1
+        else
+          hold = tile
+        end
+      end
+      self[r, top] = hold unless hold == 0
+    end
+    self == temp ? -1 : score
+  end
+
+  def move_right!
+    reflect_horizonal! 
+    score = move_left! 
+    reflect_horizonal! 
+    score 
+  end
+
+  def move_up!
+    transpose! 
+    score = move_left! 
+    transpose! 
+    score 
+  end
+
+  def move_down!
+    transpose2! 
+    score = move_left! 
+    transpose2! 
+    score 
+  end
+
+  def self.build_cache
+    1048576.times do |index|
+      ret = StaticArray(Int32, 2).new 0
+      b = StaticArray(Int32, 4).new 0
+      temp = index
+
+      4.times do |i|
+        break if temp == 0
+        b[i] = temp % 32
+        temp /= 32
+      end
+
+      score, top, hold = 0, 0, 0
+      0.upto(3) do |c|
+        tile = b[c]
+        next if tile == 0
+        b[c] = 0
+        if hold != 0
+          if (tile - hold).abs == 1 || (tile == 1 && hold == 1)
+            new_tile = max(tile, hold) + 1
+            b[top] = new_tile
+            score += TILE_MAPPING[new_tile]
+            hold = 0
+          else
+            b[top] = hold
+            hold = tile
+          end
+          top += 1
+        else
+          hold = tile
+        end
+      end
+      b[top] = hold unless hold == 0
+
+      temp = 0
+      4.times do |i|
+      end
+
+      ret[1] = score
+      @@move_cache << ret
+    end
   end
 
   def to_s(io)
