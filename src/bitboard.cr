@@ -34,11 +34,22 @@ struct BitBoard
     (@board[(index & 0b1000) >> 3] >> multiply_by_5(index & 0b0111)) & 0b11111
   end
 
+  # row, col: 0~3
+  def [](row : Int, col : Int) : Int
+    self[(row << 2) + col]
+  end
+
   # index: 0~15
   # value: 0~31
   def []=(index : Int, value : Int)
     @board[(index & 0b1000) >> 3] &= ~(0b11111_u64 << multiply_by_5(index & 0b0111))
     @board[(index & 0b1000) >> 3] |= value.to_u64 << multiply_by_5(index & 0b0111)
+  end
+
+  # row, col: 0~3
+  # value: 0~31
+  def []=(row : Int, col : Int, value : Int)
+    self[(row << 2) + col] = value
   end
 
   def ==(b : BitBoard)
