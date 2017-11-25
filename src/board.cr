@@ -2,6 +2,48 @@ require "./environment"
 
 class Board
   property board : StaticArray(Int32, 16)
+  
+  class_property move_cache : Array(StaticArray(Int32, 2)) = Array.new(1048576) { |index|
+    ret = StaticArray(Int32, 2).new 0
+    b = StaticArray(Int32, 4).new 0
+
+    idx = index
+    4.times do |i|
+      b[i] = idx & 0x1F
+      idx >>= 5
+    end
+
+    score, top, hold = 0, 0, 0
+    0.upto(3) do |c|
+      tile = b[c]
+      next if tile == 0
+      b[c] = 0
+      if hold != 0
+        if (tile - hold).abs == 1 || (tile == 1 && hold == 1)
+          new_tile = max(tile, hold) + 1
+          b[top] = new_tile
+          score += TILE_MAPPING[new_tile]
+          hold = 0
+        else
+          b[top] = hold
+          hold = tile
+        end
+        top += 1
+      else
+        hold = tile
+      end
+    end
+    b[top] = hold unless hold == 0
+
+    idx = 0
+    3.downto(0) do |i|
+      idx = (idx << 5) | b[i]
+    end
+
+    ret[0] = idx
+    ret[1] = score
+    ret
+  }
 
   def initialize(@board : StaticArray(Int32, 16) = StaticArray(Int32, 16).new 0)
   end
@@ -93,116 +135,40 @@ class Board
     score = 0
     temp = Board.new self
     0.upto(3) do |r|
-      top, hold = 0, 0
-      0.upto(3) do |c|
-        tile = self[r, c]
-        next if tile == 0
-        self[r, c] = 0
-        if hold != 0
-          if (tile - hold).abs == 1 || (tile == 1 && hold == 1)
-            new_tile = max(tile, hold) + 1
-            self[r, top] = new_tile
-            score += TILE_MAPPING[new_tile]
-            hold = 0
-          else
-            self[r, top] = hold
-            hold = tile
-          end
-          top += 1
-        else
-          hold = tile
-        end
+      idx = 0
+      3.downto(0) do |c|
+        idx = (idx << 5) | self[r, c]
       end
-      self[r, top] = hold unless hold == 0
+      cache = @@move_cache[idx]
+      score += cache[1]
+      tran_idx = cache[0]
+      0.upto(3) do |c|
+        self[r, c] = tran_idx & 0x1F
+        tran_idx >>= 5
+      end
     end
     self == temp ? -1 : score
   end
 
   def move_right!
-    score = 0
-    temp = Board.new self
-    0.upto(3) do |r|
-      top, hold = 3, 0
-      3.downto(0) do |c|
-        tile = self[r, c]
-        next if tile == 0
-        self[r, c] = 0
-        if hold != 0
-          if (tile - hold).abs == 1 || (tile == 1 && hold == 1)
-            new_tile = max(tile, hold) + 1
-            self[r, top] = new_tile
-            score += TILE_MAPPING[new_tile]
-            hold = 0
-          else
-            self[r, top] = hold
-            hold = tile
-          end
-          top -= 1
-        else
-          hold = tile
-        end
-      end
-      self[r, top] = hold unless hold == 0
-    end
-    self == temp ? -1 : score
+    reflect_horizonal! 
+    score = move_left! 
+    reflect_horizonal! 
+    score 
   end
 
   def move_up!
-    score = 0
-    temp = Board.new self
-    0.upto(3) do |c|
-      top, hold = 0, 0
-      0.upto(3) do |r|
-        tile = self[r, c]
-        next if tile == 0
-        self[r, c] = 0
-        if hold != 0
-          if (tile - hold).abs == 1 || (tile == 1 && hold == 1)
-            new_tile = max(tile, hold) + 1
-            self[top, c] = new_tile
-            score += TILE_MAPPING[new_tile]
-            hold = 0
-          else
-            self[top, c] = hold
-            hold = tile
-          end
-          top += 1
-        else
-          hold = tile
-        end
-      end
-      self[top, c] = hold unless hold == 0
-    end
-    self == temp ? -1 : score
+    transpose! 
+    score = move_left! 
+    transpose! 
+    score 
   end
 
   def move_down!
-    score = 0
-    temp = Board.new self
-    0.upto(3) do |c|
-      top, hold = 3, 0
-      3.downto(0) do |r|
-        tile = self[r, c]
-        next if tile == 0
-        self[r, c] = 0
-        if hold != 0
-          if (tile - hold).abs == 1 || (tile == 1 && hold == 1)
-            new_tile = max(tile, hold) + 1
-            self[top, c] = new_tile
-            score += TILE_MAPPING[new_tile]
-            hold = 0
-          else
-            self[top, c] = hold
-            hold = tile
-          end
-          top -= 1
-        else
-          hold = tile
-        end
-      end
-      self[top, c] = hold unless hold == 0
-    end
-    self == temp ? -1 : score
+    transpose2! 
+    score = move_left! 
+    transpose2! 
+    score 
   end
 
   def to_s(io)
