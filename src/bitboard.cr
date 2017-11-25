@@ -3,10 +3,12 @@ require "./environment"
 struct BitBoard
   #
   # Use 5-bit to represent a grid in 2584, so it cost 80-bit to represent a board
-  # @board[0] represents the grid 0~7
-  # @board[1] represents the grid 8~15
+  # @board[0] represents the grid 0~3
+  # @board[1] represents the grid 4~7
+  # @board[2] represents the grid 8~11
+  # @board[3] represents the grid 12~15
   #
-  property board : StaticArray(UInt64, 2)
+  property board : StaticArray(Int32, 4)
   class_property mask1 : StaticArray(UInt64, 9) = StaticArray(UInt64, 9).new { |index|
     v = 0_u64
     b = 0b11111_u64
@@ -30,50 +32,45 @@ struct BitBoard
     ret = StaticArray(Int32, 2).new 0
     b = StaticArray(Int32, 4).new 0
 
-    larger_than_25 = false
-    temp = index
+    idx = index
     4.times do |i|
-      break if temp == 0
-      b[i] = temp % 32
-      larger_than_25 = true if b[i] > 25
-      temp >>= 5
+      b[i] = idx & 0x1F
+      idx >>= 5
     end
 
-    if !larger_than_25
-      score, top, hold = 0, 0, 0
-      0.upto(3) do |c|
-        tile = b[c]
-        next if tile == 0
-        b[c] = 0
-        if hold != 0
-          if (tile - hold).abs == 1 || (tile == 1 && hold == 1)
-            new_tile = max(tile, hold) + 1
-            b[top] = new_tile
-            score += TILE_MAPPING[new_tile]
-            hold = 0
-          else
-            b[top] = hold
-            hold = tile
-          end
-          top += 1
+    score, top, hold = 0, 0, 0
+    0.upto(3) do |c|
+      tile = b[c]
+      next if tile == 0
+      b[c] = 0
+      if hold != 0
+        if (tile - hold).abs == 1 || (tile == 1 && hold == 1)
+          new_tile = max(tile, hold) + 1
+          b[top] = new_tile
+          score += TILE_MAPPING[new_tile]
+          hold = 0
         else
+          b[top] = hold
           hold = tile
         end
+        top += 1
+      else
+        hold = tile
       end
-      b[top] = hold unless hold == 0
-
-      temp = 0
-      3.downto(0) do |i|
-        temp = (temp << 5) + b[i]
-      end
-
-      ret[0] = temp
     end
+    b[top] = hold unless hold == 0
+
+    idx = 0
+    3.downto(0) do |i|
+      idx = (idx << 5) | b[i]
+    end
+
+    ret[0] = idx
     ret[1] = score
     ret
   }
 
-  def initialize(@board : StaticArray(UInt64, 2) = StaticArray(UInt64, 2).new 0_u64)
+  def initialize(@board : StaticArray(Int32, 4) = StaticArray(Int32, 4).new 0)
   end
 
   def initialize(b : BitBoard)
@@ -82,7 +79,7 @@ struct BitBoard
 
   # index: 0~15
   def [](index : Int) : Int32
-    ((@board[(index & 0b1000) >> 3] >> multiply_by_5(index & 0b0111)) & 0b11111).to_i
+    (@board[(index & 0b1100) >> 2] >> multiply_by_5(index & 0b11)) & 0b11111
   end
 
   # row, col: 0~3
@@ -93,8 +90,9 @@ struct BitBoard
   # index: 0~15
   # value: 0~31
   def []=(index : Int, value : Int)
-    @board[(index & 0b1000) >> 3] &= ~(0b11111_u64 << multiply_by_5(index & 0b0111))
-    @board[(index & 0b1000) >> 3] |= value.to_u64 << multiply_by_5(index & 0b0111)
+    row = (index & 0b1100) >> 2
+    col = (index & 0b0011)
+    @board[row] = (@board[row] & ~(0x1F << multiply_by_5(col))) | ((value & 0x1F) << multiply_by_5(col))
   end
 
   # row, col: 0~3
@@ -107,110 +105,22 @@ struct BitBoard
     @board == b.board
   end
 
-  # count : 0~15
-  # TODO: improve
-  def >>(count : Int) : BitBoard
-    other = BitBoard.new self
-
-    if count == 0
-      
-    elsif count < 8
-      other.board[0] = other.board[0] >> multiply_by_5(count)
-      temp = other.board[1] & @@mask1[count]
-      other.board[0] = other.board[0] | (temp << (40 - multiply_by_5(count)))
-      other.board[1] = other.board[1] >> multiply_by_5(count)
-    else
-      other.board[0] = other.board[1] >> multiply_by_5(count & 0b0111)
-      other.board[1] = 0_u64
-    end
-    
-    other
-  end
-
-  # count : 0~15
-  # TODO: improve
-  def <<(count : Int) : BitBoard
-    other = BitBoard.new self
-
-    if count == 0
-
-    elsif count < 8
-      other.board[1] = (other.board[1] << multiply_by_5(count & 0b0111)) & @@mask2[8]
-      temp = (other.board[0] & @@mask2[count]) >> (40 - multiply_by_5(count & 0b0111))
-      other.board[0] = (other.board[0] << multiply_by_5(count & 0b0111)) & @@mask2[8]
-      other.board[1] = other.board[1] | temp
-    else
-      other.board[1] = other.board[0]
-      other.board[1] = (other.board[1] << multiply_by_5(count & 0b0111)) & @@mask2[8]
-      other.board[0] = 0_u64
-    end
-
-    other
-  end
-
-  def &(b : BitBoard) : BitBoard
-    other = BitBoard.new self
-
-    other.board[0] = @board[0] & b.board[0]
-    other.board[1] = @board[1] & b.board[1]
-
-    other
-  end
-
-  def |(b : BitBoard) : BitBoard
-    other = BitBoard.new self
-    
-    other.board[0] = @board[0] | b.board[0]
-    other.board[1] = @board[1] | b.board[1]
-    
-    other
-  end
-
-  def ^(b : BitBoard) : BitBoard
-    other = BitBoard.new self
-    
-    other.board[0] = @board[0] ^ b.board[0]
-    other.board[1] = @board[1] ^ b.board[1]
-    
-    other
-  end
-
   # tranpose followed by \
-  def transpose! : BitBoard
-    x = @board[0]
-    y = @board[1]
-    
-    t = (x ^ (x >> multiply_by_5(3))) & 0xF83E0_u64
-    @board[0] = x ^ t ^ ((t << multiply_by_5(3)) & @@mask1[8])
-    t = (y ^ (y >> multiply_by_5(3))) & 0xF83E0_u64
-    @board[1] = y ^ t ^ ((t << multiply_by_5(3)) & @@mask1[8])
-    
-    x = (@board[0] >> multiply_by_5(2)) & 0x3FF003FF_u64
-    y = @board[1] & 0x3FF003FF_u64
-
-    @board[0] = (@board[0] & 0x3FF003FF_u64) | (y << multiply_by_5(2))
-    @board[1] = (@board[1] & (~(0x3FF003FF_u64))) | x
-
-    self
+  def transpose!
+    1.upto(3) do |row|
+      0.upto(row - 1) do |col|
+        self[row, col], self[col, row] = self[col, row], self[row, col]
+      end
+    end
   end
 
   # tranpose followed by /
-  def transpose2! : BitBoard
-    x = @board[0]
-    y = @board[1]
-        
-    t = (x ^ (x >> multiply_by_5(5))) & 0x07C1F_u64
-    @board[0] = x ^ t ^ ((t << multiply_by_5(5)) & @@mask1[8])
-    t = (y ^ (y >> multiply_by_5(5))) & 0x07C1F_u64
-    @board[1] = y ^ t ^ ((t << multiply_by_5(5)) & @@mask1[8])
-        
-    y = (@board[1] >> multiply_by_5(2)) & 0x3FF003FF_u64
-    x = @board[0] & 0x3FF003FF_u64
-    
-    @board[1] = (@board[1] & 0x3FF003FF_u64) | (x << multiply_by_5(2))
-    @board[0] = (@board[0] & (~(0x3FF003FF_u64))) | y
-
-    self
+  def transpose2!
+    0.upto(2) do |row|
+      0.upto(2 - row) do |col|
+        self[row, col], self[3 - col, 3 - row] = self[3 - col, 3 - row], self[row, col]
+      end
+    end
   end
 
   def reflect_horizonal!
@@ -238,12 +148,11 @@ struct BitBoard
   end
 
   def get_row(row : Int)
-    (@board[(row & 0b10) >> 1] >> multiply_by_5((row & 1) << 2)) & 0xFFFFF_u64
+    @board[row]
   end
 
   def set_row!(row : Int, value : Int32)
-    @board[(row & 0b10) >> 1] &= (~(0xFFFFF_u64 << multiply_by_5((row & 1) << 2))) & 0xFFFFFFFFFF_u64
-    @board[(row & 0b10) >> 1] |= (value.to_u64 << (multiply_by_5((row & 1) << 2)))
+    @board[row] = value
   end
 
   def move_left!
