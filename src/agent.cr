@@ -58,12 +58,10 @@ class Player < Agent
     @save_path = @prop["save"]? ? @prop["save"] : ""
     @load_path = @prop["load"]? ? @prop["load"] : ""
     @tuple_network = TupleNetwork.new [
-      Feature.new([0, 1, 2, 3, 4], "axe1"),
-      Feature.new([4, 5, 6, 7, 8], "axe2"),
-      Feature.new([0, 1, 2, 4, 5], "thumb1"),
-      Feature.new([4, 5, 6, 8, 9], "thumb2"),
-      Feature.new([1, 2, 3, 5, 6], "thumb3"),
-      Feature.new([0, 1, 2, 4, 5], "stair"),
+      Feature.new([0, 1, 2, 3, 4], "axe"),
+      Feature.new([0, 1, 4, 5, 6], "thumb1"),
+      Feature.new([1, 2, 3, 5, 6], "thumb2"),
+      Feature.new([5, 6, 7, 9, 10], "thumb3"),
     ]
     @episode = Array(State).new 20000
     load_tuple_network
