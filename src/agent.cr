@@ -127,11 +127,11 @@ class Player < Agent
   end
 
   def dfs(b : Board, depth : Int32)
-    if depth % 2 == 1 # max-node
-      value = -1e9
+    if (depth & 1) > 0 # max-node
+      value = 0
       0.upto(3) do |op|
         temp = Board.new b
-        reward = Action.move(op).apply!(temp)
+        reward = temp.move!(op)
         if reward != -1
           if depth - 1 > 0
             estimate =  dfs(temp, depth - 1)
@@ -139,8 +139,6 @@ class Player < Agent
             estimate =  @tuple_network.estimate(temp)
           end
           value = reward + estimate if reward + estimate > value
-        else
-          value = 0 if 0 > value
         end
       end
       value
@@ -149,9 +147,9 @@ class Player < Agent
       0.upto(15) do |tile_number|
         next if b[tile_number] != 0
         GAME_ENV.each do |tile_value|
-          b[tile_number] = tile_value[0];
+          b[tile_number] = tile_value[0]
           value += tile_value[1] * dfs(b, depth - 1)
-          b[tile_number] = 0;
+          b[tile_number] = 0
         end
       end
       value
