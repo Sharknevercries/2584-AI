@@ -68,9 +68,8 @@ struct BitBoard
       end
 
       ret[0] = temp
-      ret[1] = score
     end
-
+    ret[1] = score
     ret
   }
 
@@ -238,33 +237,24 @@ struct BitBoard
     reflect_vertical!
   end
 
+  def get_row(row : Int)
+    (@board[(row & 0b10) >> 1] >> multiply_by_5((row & 1) << 2)) & 0xFFFFF_u64
+  end
+
+  def set_row!(row : Int, value : Int32)
+    @board[(row & 0b10) >> 1] &= (~(0xFFFFF_u64 << multiply_by_5((row & 1) << 2))) & 0xFFFFFFFFFF_u64
+    @board[(row & 0b10) >> 1] |= (value.to_u64 << (multiply_by_5((row & 1) << 2)))
+  end
+
   def move_left!
     score = 0
-    temp = Board.new self
-    0.upto(3) do |r|
-      top, hold = 0, 0
-      0.upto(3) do |c|
-        tile = self[r, c]
-        next if tile == 0
-        self[r, c] = 0
-        if hold != 0
-          if (tile - hold).abs == 1 || (tile == 1 && hold == 1)
-            new_tile = max(tile, hold) + 1
-            self[r, top] = new_tile
-            score += TILE_MAPPING[new_tile]
-            hold = 0
-          else
-            self[r, top] = hold
-            hold = tile
-          end
-          top += 1
-        else
-          hold = tile
-        end
-      end
-      self[r, top] = hold unless hold == 0
+    b = BitBoard.new self
+    4.times do |row|
+      m = @@move_cache[get_row(row)]
+      score += m[1] # reward
+      set_row!(row, m[0])
     end
-    self == temp ? -1 : score
+    b == self ? -1 : score
   end
 
   def move_right!
@@ -286,49 +276,6 @@ struct BitBoard
     score = move_left! 
     transpose2! 
     score 
-  end
-
-  def self.build_cache
-    1048576.times do |index|
-      ret = StaticArray(Int32, 2).new 0
-      b = StaticArray(Int32, 4).new 0
-      temp = index
-
-      4.times do |i|
-        break if temp == 0
-        b[i] = temp % 32
-        temp /= 32
-      end
-
-      score, top, hold = 0, 0, 0
-      0.upto(3) do |c|
-        tile = b[c]
-        next if tile == 0
-        b[c] = 0
-        if hold != 0
-          if (tile - hold).abs == 1 || (tile == 1 && hold == 1)
-            new_tile = max(tile, hold) + 1
-            b[top] = new_tile
-            score += TILE_MAPPING[new_tile]
-            hold = 0
-          else
-            b[top] = hold
-            hold = tile
-          end
-          top += 1
-        else
-          hold = tile
-        end
-      end
-      b[top] = hold unless hold == 0
-
-      temp = 0
-      4.times do |i|
-      end
-
-      ret[1] = score
-      @@move_cache << ret
-    end
   end
 
   def to_s(io)
