@@ -101,7 +101,7 @@ class Player < Agent
   def take_action(b : Board)
     best_op = 0
     best_value = -1e9
-    after = Array(State).new 4 { |op|
+    after = StaticArray(State, 4).new { |op|
       temp = Board.new b
       reward = temp.move!(op)
       if reward != -1
