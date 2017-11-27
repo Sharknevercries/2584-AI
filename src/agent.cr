@@ -57,11 +57,21 @@ class Player < Agent
     @alpha = @prop["alpha"]? ? @prop["alpha"].to_f : 0.0025
     @save_path = @prop["save"]? ? @prop["save"] : ""
     @load_path = @prop["load"]? ? @prop["load"] : ""
+    
+    f_arr = [[0, 1, 2, 3, 4], [0, 1, 4, 5, 6], [1, 2, 3, 5, 6], [5, 6, 7, 9, 10]]
+    f = StaticArray(StaticArray(Int32, 5), 4).new { |i|
+      temp = StaticArray(Int32, 5).new 0
+      f_arr[i].each_with_index do |v, idx|
+        temp[idx] = v
+      end
+      temp
+    }
+
     @tuple_network = TupleNetwork.new [
-      Feature.new([0, 1, 2, 3, 4], "axe"),
-      Feature.new([0, 1, 4, 5, 6], "thumb1"),
-      Feature.new([1, 2, 3, 5, 6], "thumb2"),
-      Feature.new([5, 6, 7, 9, 10], "thumb3"),
+      Feature.new(f[0], "axe"),
+      Feature.new(f[1], "thumb1"),
+      Feature.new(f[2], "thumb2"),
+      Feature.new(f[3], "thumb3"),
     ]
     @episode = Array(State).new 20000
     load_tuple_network

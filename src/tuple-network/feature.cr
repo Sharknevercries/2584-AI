@@ -1,16 +1,17 @@
 class Feature
   property name : String
 
-  def initialize(@pattern : Array(Int32), @name = "No Name")
+  # Use 5-tuple
+  def initialize(@pattern : StaticArray(Int32, 5), @name = "No Name")
     @lut = Array(Float64).new(1 << (5 * @pattern.size), 0.0)
 
     b = Board.new (StaticArray(Int32, 16).new { |k| k })
-    @iso_idxs = StaticArray(Array(Int32), 8).new { |i|
-      iso = Array(Int32).new @pattern.size
+    @iso_idxs = StaticArray(StaticArray(Int32, 5), 8).new { |i|
+      iso = StaticArray(Int32, 5).new 0
       b.reflect_horizonal! if i == 4
       b.rotate_right!
-      @pattern.each do |e|
-        iso << b[e]
+      @pattern.each_with_index do |e, idx|
+        iso[idx] = b[e]
       end
       iso
     }
@@ -58,7 +59,7 @@ class Feature
     end
   end
 
-  private def at(b : Board, idxs : Array(Int32))
+  private def at(b : Board, idxs : StaticArray(Int32, 5))
     lut_idx = 0
     idxs.each do |idx|
       lut_idx = (lut_idx << 5) | b[idx]
