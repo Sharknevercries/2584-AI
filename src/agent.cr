@@ -144,11 +144,12 @@ class Player < Agent
       value
     else # expected-node
       value = 0.0
+      empty_count = b.board.count { |i| i == 0 }
       0.upto(15) do |tile_number|
         next if b[tile_number] != 0
         GAME_ENV.each do |tile_value|
           b[tile_number] = tile_value[0]
-          value += tile_value[1] * dfs(b, depth - 1)
+          value += tile_value[1] / empty_count * dfs(b, depth - 1)
           b[tile_number] = 0
         end
       end
