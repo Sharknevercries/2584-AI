@@ -99,7 +99,7 @@ class Player < Agent
 
   def close_episode(flag : String = "")
     n = @episode.size - 1
-    @tuple_network.update(@episode[n].after, @alpha * (-@tuple_network.estimate(@episode[n - 1].after)))
+    @tuple_network.update(@episode[n].after, @alpha * (-@tuple_network.estimate(@episode[n].after)))
 
     @episode.each_cons(2, true) do |cons|
       td_error = cons[1].reward + @tuple_network.estimate(cons[1].after) - @tuple_network.estimate(cons[0].after)
